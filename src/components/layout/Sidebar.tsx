@@ -9,7 +9,7 @@ import {
   BarChart3,
   Settings,
   Database,
-  CloudOff,
+  LogOut,
   Sun,
   Moon,
   Languages,
@@ -29,10 +29,11 @@ export const Sidebar: React.FC = () => {
     setLanguage,
     theme,
     setTheme,
-    storageMode,
     selectedYear,
     selectedMonth,
     setSelectedPeriod,
+    user,
+    handleSignOut,
   } = useApp();
   const { t, isRTL } = useTranslation(language);
 
@@ -85,26 +86,21 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Storage Mode Badge */}
+        {/* Online Database & User Status Badge */}
         <div className="px-2">
-          <button
-            onClick={() => setActivePage('settings')}
-            className={cn(
-              'w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all',
-              storageMode === 'supabase'
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
-            )}
-          >
-            {storageMode === 'supabase' ? (
-              <Database className="h-3.5 w-3.5 shrink-0" />
-            ) : (
-              <CloudOff className="h-3.5 w-3.5 shrink-0" />
-            )}
-            <span className="truncate">
-              {storageMode === 'supabase' ? t('supabase_mode_badge') : t('local_mode_badge')}
-            </span>
-          </button>
+          <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <div className="flex items-center gap-2 truncate">
+              <Database className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+              <span className="truncate">{user?.display_name || user?.email || 'Connected'}</span>
+            </div>
+            <button
+              onClick={handleSignOut}
+              title="Sign Out"
+              className="p-1 rounded-md text-emerald-700 dark:text-emerald-300 hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Month Selector Widget */}

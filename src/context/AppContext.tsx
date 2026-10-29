@@ -14,7 +14,7 @@ import {
   CurrencyCode,
   DailySpendingAnalysis,
 } from '@/types';
-import { StorageService, DEFAULT_LOCAL_USER } from '@/lib/storage';
+import { StorageService } from '@/lib/storage';
 import { getCurrentYearAndMonth, getTodayDateString } from '@/lib/dateUtils';
 import { calculateDailySpending } from '@/lib/spendingCalculator';
 import { getSupabase } from '@/lib/supabase';
@@ -90,6 +90,8 @@ interface AppContextType {
 
   // Auth
   isLoading: boolean;
+  isAuthenticated: boolean;
+  handleSignOut: () => Promise<void>;
   isOnboardingOpen: boolean;
   setIsOnboardingOpen: (open: boolean) => void;
 }
@@ -103,6 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activePage, setActivePage] = useState<AppPage>('dashboard');
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [storageMode, setStorageModeState] = useState<StorageMode>(StorageService.getStorageMode());
 
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -136,18 +139,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const mode = StorageService.getStorageMode();
-      setStorageModeState(mode);
+      const supabase = getSupabase();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
 
-      let profile = await StorageService.getUserProfile();
-      if (!profile) {
-        // Initialize default local profile if none exists
-        profile = await StorageService.saveUserProfile(DEFAULT_LOCAL_USER);
-        setIsOnboardingOpen(true);
-      } else if (!profile.is_onboarded) {
+      if (!authUser) {
+        setIsAuthenticated(false);
+        setUser(null);
+        setTransactions([]);
+        setMonthlyBudgets([]);
+        setCategoryBudgets([]);
+        setWishlistItems([]);
+        setSavingsGoals([]);
+        setRecurringTransactions([]);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsAuthenticated(true);
+      const profile = await StorageService.getUserProfile();
+      setUser(profile);
+      if (profile && !profile.is_onboarded) {
         setIsOnboardingOpen(true);
       }
-      setUser(profile);
 
       const [cats, txs, mBudgets, wish, savings, recurring] = await Promise.all([
         StorageService.getCategories(),
@@ -180,8 +193,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const handleSignOut = async () => {
+    const supabase = getSupabase();
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setUser(null);
+    setTransactions([]);
+    setMonthlyBudgets([]);
+    setCategoryBudgets([]);
+    setWishlistItems([]);
+    setSavingsGoals([]);
+    setRecurringTransactions([]);
+  };
+
   useEffect(() => {
     loadData();
+    const supabase = getSupabase();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        loadData();
+      } else {
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    });
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Reload category budgets whenever selected period changes
@@ -200,7 +238,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const setStorageMode = (mode: StorageMode) => {
-    StorageService.setStorageMode(mode);
     setStorageModeState(mode);
     loadData();
   };
@@ -506,6 +543,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         clearAllData,
         refreshAllData: loadData,
         isLoading,
+        isAuthenticated,
+        handleSignOut,
         isOnboardingOpen,
         setIsOnboardingOpen,
       }}

@@ -1,79 +1,76 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 
-const STORAGE_KEY_URL = 'spendly_supabase_url';
-const STORAGE_KEY_ANON = 'spendly_supabase_anon_key';
+// Online Supabase Production Project
+export const DEFAULT_SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || 'https://fdtinjhomdpxzcvfmsev.supabase.co';
 
-export function getStoredSupabaseConfig(): { url: string; anonKey: string } {
-  const envUrl = import.meta.env.VITE_SUPABASE_URL || '';
-  const envAnon = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+export const DEFAULT_SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkdGluamhvbWRweHpjdmZtc2V2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNDgzNTIsImV4cCI6MjA5OTcyNDM1Mn0.fWq8wl9qS1WLUDBDvrfnCUEpkOWOOWLFDbwM2_nuF8Y';
 
-  const localUrl = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_URL) : '';
-  const localAnon = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY_ANON) : '';
+let clientInstance: SupabaseClient | null = null;
 
-  return {
-    url: localUrl || envUrl,
-    anonKey: localAnon || envAnon,
-  };
-}
-
-export function saveStoredSupabaseConfig(url: string, anonKey: string): void {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY_URL, url.trim());
-    localStorage.setItem(STORAGE_KEY_ANON, anonKey.trim());
-  }
-}
-
-export function clearStoredSupabaseConfig(): void {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem(STORAGE_KEY_URL);
-    localStorage.removeItem(STORAGE_KEY_ANON);
-  }
-}
-
-let cachedClient: SupabaseClient | null = null;
-let lastUsedUrl = '';
-let lastUsedAnon = '';
-
-export function getSupabase(): SupabaseClient | null {
-  const { url, anonKey } = getStoredSupabaseConfig();
-
-  if (!url || !anonKey) {
-    return null;
-  }
-
-  if (cachedClient && lastUsedUrl === url && lastUsedAnon === anonKey) {
-    return cachedClient;
-  }
-
-  try {
-    cachedClient = createClient(url, anonKey, {
+export function getSupabase(): SupabaseClient {
+  if (!clientInstance) {
+    clientInstance = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
+        detectSessionInUrl: true,
       },
     });
-    lastUsedUrl = url;
-    lastUsedAnon = anonKey;
-    return cachedClient;
-  } catch (err) {
-    console.error('Failed to create Supabase client:', err);
-    return null;
   }
+  return clientInstance;
 }
 
-export async function testSupabaseConnection(
-  url: string,
-  anonKey: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const testClient = createClient(url, anonKey);
-    // Ping public.categories or auth session
-    const { error } = await testClient.from('categories').select('count', { count: 'exact', head: true });
-    if (error && error.code !== 'PGRST116') {
-      return { success: false, error: error.message };
-    }
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err?.message || 'Connection failed' };
+export async function signInUser(email: string, password: string): Promise<{ user: User | null; session: Session | null; error?: string }> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim(),
+    password,
+  });
+
+  if (error) {
+    return { user: null, session: null, error: error.message };
   }
+  return { user: data.user, session: data.session };
+}
+
+export async function signUpUser(
+  email: string,
+  password: string,
+  displayName: string,
+  currency: string = 'EGP'
+): Promise<{ user: User | null; session: Session | null; error?: string }> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim(),
+    password,
+    options: {
+      data: {
+        full_name: displayName.trim(),
+        display_name: displayName.trim(),
+        currency,
+        language: 'en',
+      },
+    },
+  });
+
+  if (error) {
+    return { user: null, session: null, error: error.message };
+  }
+  return { user: data.user, session: data.session };
+}
+
+export async function signOutUser(): Promise<{ error?: string }> {
+  const supabase = getSupabase();
+  const { error } = await supabase.auth.signOut();
+  if (error) return { error: error.message };
+  return {};
+}
+
+export async function getCurrentUser(): Promise<User | null> {
+  const supabase = getSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 }

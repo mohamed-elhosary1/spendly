@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
+import { AuthPage } from '@/components/auth/AuthPage';
 import { DashboardPage } from '@/components/dashboard/DashboardPage';
 import { WorkspacePage } from '@/components/workspace/WorkspacePage';
 import { TransactionsPage } from '@/components/transactions/TransactionsPage';
@@ -14,7 +15,7 @@ import { ReportsPage } from '@/components/reports/ReportsPage';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 
 const AppContent: React.FC = () => {
-  const { activePage, isLoading } = useApp();
+  const { activePage, isLoading, isAuthenticated, refreshAllData } = useApp();
 
   if (isLoading) {
     return (
@@ -22,11 +23,16 @@ const AppContent: React.FC = () => {
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
           <span className="text-xs font-semibold text-muted-foreground tracking-wide">
-            Loading Spendly Workspace...
+            Connecting to Spendly Online Database...
           </span>
         </div>
       </div>
     );
+  }
+
+  // Enforce authentication: show Auth Page if not logged in
+  if (!isAuthenticated) {
+    return <AuthPage onAuthSuccess={refreshAllData} />;
   }
 
   const renderActivePage = () => {

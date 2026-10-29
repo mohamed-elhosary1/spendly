@@ -13,13 +13,14 @@ import {
   Languages,
   Sun,
   Moon,
+  LogOut,
 } from 'lucide-react';
 import { useApp, AppPage } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 export const MobileNav: React.FC = () => {
-  const { activePage, setActivePage, language, setLanguage, theme, setTheme } = useApp();
+  const { activePage, setActivePage, language, setLanguage, theme, setTheme, handleSignOut } = useApp();
   const { t } = useTranslation(language);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -119,22 +120,35 @@ export const MobileNav: React.FC = () => {
               })}
             </div>
 
-            {/* Quick Settings in Mobile Drawer */}
-            <div className="pt-4 border-t border-border/60 flex items-center justify-between">
-              <button
-                onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-secondary text-xs font-semibold"
-              >
-                <Languages className="h-4 w-4" />
-                <span>{language === 'en' ? 'العربية' : 'English'}</span>
-              </button>
+            {/* Quick Settings & Sign Out in Mobile Drawer */}
+            <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setLanguage(language === 'en' ? 'ar' : 'en')}
+                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-secondary text-xs font-semibold"
+                >
+                  <Languages className="h-3.5 w-3.5" />
+                  <span>{language === 'en' ? 'العربية' : 'English'}</span>
+                </button>
+
+                <button
+                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-secondary text-xs font-semibold"
+                >
+                  {theme === 'light' ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+                  <span>{theme === 'light' ? 'Dark' : 'Light'}</span>
+                </button>
+              </div>
 
               <button
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-secondary text-xs font-semibold"
+                onClick={() => {
+                  setIsDrawerOpen(false);
+                  handleSignOut();
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold border border-rose-500/20"
               >
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Sign Out</span>
               </button>
             </div>
           </div>

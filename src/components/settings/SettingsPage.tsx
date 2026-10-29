@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Settings,
   Database,
-  CloudOff,
   Sun,
   Moon,
   Languages,
@@ -10,10 +9,11 @@ import {
   Plus,
   Trash2,
   CheckCircle2,
-  AlertCircle,
   Repeat,
   ShieldCheck,
   RefreshCw,
+  LogOut,
+  User as UserIcon,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
@@ -21,17 +21,10 @@ import {
   CurrencyCode,
   LanguageCode,
   ThemeMode,
-  RecurringTransaction,
   RecurringFrequency,
 } from '@/types';
 import { formatCurrency, CURRENCY_SYMBOLS } from '@/lib/currency';
 import { formatDateString, getTodayDateString } from '@/lib/dateUtils';
-import {
-  getStoredSupabaseConfig,
-  saveStoredSupabaseConfig,
-  clearStoredSupabaseConfig,
-  testSupabaseConnection,
-} from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -43,8 +36,6 @@ export const SettingsPage: React.FC = () => {
   const {
     user,
     updateProfile,
-    storageMode,
-    setStorageMode,
     language,
     setLanguage,
     theme,
@@ -57,6 +48,7 @@ export const SettingsPage: React.FC = () => {
     saveRecurringTransaction,
     deleteRecurringTransaction,
     processDueRecurring,
+    handleSignOut,
   } = useApp();
   const { t } = useTranslation(language);
 
@@ -67,13 +59,6 @@ export const SettingsPage: React.FC = () => {
   );
   const [budgetCycleDay, setBudgetCycleDay] = useState<number>(user?.budget_cycle_start_day || 1);
   const [isSavedFeedback, setIsSavedFeedback] = useState<boolean>(false);
-
-  // Supabase cloud config state
-  const storedConfig = getStoredSupabaseConfig();
-  const [supabaseUrl, setSupabaseUrl] = useState<string>(storedConfig.url);
-  const [supabaseAnonKey, setSupabaseAnonKey] = useState<string>(storedConfig.anonKey);
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [isTesting, setIsTesting] = useState<boolean>(false);
 
   // Recurring subscription modal
   const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
@@ -93,55 +78,12 @@ export const SettingsPage: React.FC = () => {
     setTimeout(() => setIsSavedFeedback(false), 3000);
   };
 
-  const handleTestSupabase = async () => {
-    if (!supabaseUrl.trim() || !supabaseAnonKey.trim()) {
-      setTestResult({ success: false, message: 'Please enter both Supabase URL and Anon Key.' });
-      return;
-    }
-    setIsTesting(true);
-    setTestResult(null);
-
-    const res = await testSupabaseConnection(supabaseUrl, supabaseAnonKey);
-    setIsTesting(false);
-    if (res.success) {
-      setTestResult({ success: true, message: 'Connection successful! Database is accessible.' });
-    } else {
-      setTestResult({
-        success: false,
-        message: `Connection failed: ${res.error || 'Check URL and Anon Key.'}`,
-      });
-    }
-  };
-
-  const handleSaveSupabaseConfig = () => {
-    if (supabaseUrl.trim() && supabaseAnonKey.trim()) {
-      saveStoredSupabaseConfig(supabaseUrl, supabaseAnonKey);
-      setStorageMode('supabase');
-      setTestResult({
-        success: true,
-        message: 'Saved! Application is now configured to sync with Supabase.',
-      });
-    }
-  };
-
-  const handleDisconnectSupabase = () => {
-    clearStoredSupabaseConfig();
-    setSupabaseUrl('');
-    setSupabaseAnonKey('');
-    setStorageMode('local');
-    setTestResult({
-      success: true,
-      message: 'Disconnected from cloud. Operating in local mode.',
-    });
-  };
-
   const handleAddRecurring = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = parseFloat(recAmount);
     if (isNaN(amt) || amt <= 0 || !recDescription.trim()) return;
 
     await saveRecurringTransaction({
-      user_id: user?.id || 'local-user',
       description: recDescription.trim(),
       amount: amt,
       currency,
@@ -165,7 +107,40 @@ export const SettingsPage: React.FC = () => {
         <p className="text-xs text-muted-foreground mt-0.5">{t('settings_subtitle')}</p>
       </div>
 
-      {/* 1. Appearance & Preferences */}
+      {/* 1. Online Database & Account Status Banner */}
+      <Card className="p-6 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-500/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-foreground">Online Database Connected</h3>
+                <Badge variant="success" className="text-[10px] font-bold">
+                  Active
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Signed in as <span className="font-semibold text-foreground">{user?.email || 'Authenticated User'}</span>.
+                All transactions are synchronized with the live PostgreSQL database.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleSignOut}
+            className="text-xs font-semibold gap-1.5 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/10 self-start sm:self-center shrink-0"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span>Sign Out</span>
+          </Button>
+        </div>
+      </Card>
+
+      {/* 2. Appearance & Preferences */}
       <Card className="p-6 space-y-5">
         <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
           <Settings className="h-5 w-5 text-emerald-500" />
@@ -248,7 +223,7 @@ export const SettingsPage: React.FC = () => {
         </form>
       </Card>
 
-      {/* 2. Recurring Subscriptions & Bills */}
+      {/* 3. Recurring Subscriptions & Bills */}
       <Card className="p-6 space-y-5">
         <div className="flex items-center justify-between pb-2 border-b border-border/60">
           <div className="flex items-center gap-2.5">
@@ -322,14 +297,14 @@ export const SettingsPage: React.FC = () => {
         )}
       </Card>
 
-      {/* 3. Demo & Sample Data Management */}
+      {/* 4. Demo Data Helper */}
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
           <Database className="h-5 w-5 text-amber-500" />
           <div>
-            <h3 className="text-base font-bold text-foreground">{t('demo_data_section')}</h3>
+            <h3 className="text-base font-bold text-foreground">Sample Data & Account Actions</h3>
             <p className="text-xs text-muted-foreground">
-              Explicit sample data loader for testing calculations and charts without affecting remote data.
+              Load realistic sample records to test your dashboard or clear all records from your account.
             </p>
           </div>
         </div>
@@ -352,101 +327,8 @@ export const SettingsPage: React.FC = () => {
             className="text-xs font-semibold gap-1.5"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span>{t('clear_demo_btn')}</span>
+            <span>Clear All Data</span>
           </Button>
-        </div>
-      </Card>
-
-      {/* 4. Supabase Cloud Sync Configuration */}
-      <Card className="p-6 space-y-5">
-        <div className="flex items-center justify-between pb-2 border-b border-border/60">
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="h-5 w-5 text-emerald-500" />
-            <div>
-              <h3 className="text-base font-bold text-foreground">{t('supabase_section')}</h3>
-              <p className="text-xs text-muted-foreground">
-                Connect your real Supabase PostgreSQL backend with Row Level Security (RLS).
-              </p>
-            </div>
-          </div>
-
-          <Badge
-            variant={storageMode === 'supabase' ? 'success' : 'warning'}
-            className="text-xs font-bold"
-          >
-            {storageMode === 'supabase' ? t('connected_status') : t('disconnected_status')}
-          </Badge>
-        </div>
-
-        <div className="space-y-4">
-          <Input
-            label={t('supabase_url_label')}
-            placeholder="https://xyzcompany.supabase.co"
-            value={supabaseUrl}
-            onChange={(e) => setSupabaseUrl(e.target.value)}
-          />
-
-          <Input
-            label={t('supabase_key_label')}
-            type="password"
-            placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-            value={supabaseAnonKey}
-            onChange={(e) => setSupabaseAnonKey(e.target.value)}
-          />
-
-          {testResult && (
-            <div
-              className={`p-3 rounded-xl border text-xs flex items-center gap-2 ${
-                testResult.success
-                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-rose-500/10 border-rose-500/20 text-rose-700 dark:text-rose-300'
-              }`}
-            >
-              {testResult.success ? (
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-              ) : (
-                <AlertCircle className="h-4 w-4 shrink-0" />
-              )}
-              <span>{testResult.message}</span>
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleTestSupabase}
-              isLoading={isTesting}
-              className="text-xs font-semibold"
-            >
-              {t('test_connection_btn')}
-            </Button>
-
-            <div className="flex items-center gap-2">
-              {storageMode === 'supabase' && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDisconnectSupabase}
-                  className="text-xs text-rose-500"
-                >
-                  Disconnect
-                </Button>
-              )}
-
-              <Button
-                type="button"
-                size="sm"
-                variant="success"
-                onClick={handleSaveSupabaseConfig}
-                className="text-xs font-bold"
-              >
-                {t('save_connection_btn')}
-              </Button>
-            </div>
-          </div>
         </div>
       </Card>
 
