@@ -319,7 +319,6 @@ export const WorkspacePage: React.FC = () => {
     if (isNaN(amt) || amt <= 0 || !manualDescription.trim()) return;
 
     await addTransaction({
-      user_id: user?.id || 'local-user',
       type: manualType,
       amount: amt,
       currency,

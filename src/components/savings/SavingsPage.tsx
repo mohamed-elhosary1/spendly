@@ -22,6 +22,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const SavingsPage: React.FC = () => {
   const {
@@ -172,9 +173,15 @@ export const SavingsPage: React.FC = () => {
       {/* Goals Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {savingsGoals.length === 0 ? (
-          <Card className="col-span-full py-12 text-center text-muted-foreground text-xs">
-            No savings goals yet. Create one for emergency funds, travel, or long-term dreams!
-          </Card>
+          <div className="col-span-full">
+            <EmptyState
+              title="No savings targets yet"
+              description="Create savings targets for emergency funds, travel, or long-term investments, and track your milestone progress."
+              mascotMood="curious"
+              actionLabel="+ Create Savings Target"
+              onAction={openAddModal}
+            />
+          </div>
         ) : (
           savingsGoals.map((goal) => {
             const pct =

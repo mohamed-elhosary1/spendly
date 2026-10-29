@@ -1,20 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import {
-  PieChart,
-  Plus,
   Edit2,
-  AlertTriangle,
-  CheckCircle2,
-  Calendar,
   Trash2,
-  TrendingDown,
   Layers,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
 import { formatCurrency } from '@/lib/currency';
 import { MONTH_NAMES, parseISO } from '@/lib/dateUtils';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
@@ -75,14 +69,13 @@ export const BudgetsPage: React.FC = () => {
     });
 
     // 2. Save category budgets
-    const categoryBudgetEntries: { category_id: string; amount: number; user_id: string }[] = [];
+    const categoryBudgetEntries: { category_id: string; amount: number }[] = [];
     Object.entries(catLimits).forEach(([catId, amtStr]) => {
       const amt = parseFloat(amtStr);
       if (!isNaN(amt) && amt > 0) {
         categoryBudgetEntries.push({
           category_id: catId,
           amount: amt,
-          user_id: 'local-user',
         });
       }
     });

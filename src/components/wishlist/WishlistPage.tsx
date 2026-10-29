@@ -30,6 +30,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const WishlistPage: React.FC = () => {
   const {
@@ -273,9 +274,19 @@ export const WishlistPage: React.FC = () => {
       {/* Wishlist Items Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredItems.length === 0 ? (
-          <Card className="col-span-full py-12 text-center text-muted-foreground text-xs">
-            No wishlist items found. Click "+ Add Wishlist Item" to plan your first purchase!
-          </Card>
+          <div className="col-span-full">
+            <EmptyState
+              title={searchTerm ? 'No matching wishlist items' : 'Your wishlist is empty'}
+              description={
+                searchTerm
+                  ? `No items match "${searchTerm}". Try another search or filter.`
+                  : 'Save products you want to buy, track your progress, and evaluate if you can afford them before spending.'
+              }
+              mascotMood="curious"
+              actionLabel={searchTerm ? 'Clear Search' : '+ Add Wishlist Item'}
+              onAction={searchTerm ? () => setSearchTerm('') : openAddModal}
+            />
+          </div>
         ) : (
           filteredItems.map((item) => {
             const affordability = evaluateAffordability(item, {

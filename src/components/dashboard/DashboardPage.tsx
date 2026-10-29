@@ -4,14 +4,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   TrendingDown,
-  Calendar,
   AlertTriangle,
   CheckCircle2,
-  Clock,
   Sparkles,
   PieChart as PieIcon,
   ChevronRight,
-  Plus,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -26,19 +23,18 @@ import {
 } from 'recharts';
 import { useApp } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
-import { formatCurrency, formatNumber } from '@/lib/currency';
+import { formatCurrency } from '@/lib/currency';
 import { formatDateString, parseISO } from '@/lib/dateUtils';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const DashboardPage: React.FC = () => {
   const {
-    user,
     transactions,
-    currentMonthBudget,
     dailySpendingAnalysis,
     selectedYear,
     selectedMonth,
@@ -536,9 +532,18 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {recentTransactions.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground text-xs">
-              No transactions recorded for this month yet.
-            </div>
+            <EmptyState
+              title={language === 'ar' ? 'لا توجد معاملات مسجلة' : 'No transactions recorded yet'}
+              description={
+                language === 'ar'
+                  ? 'سجل أول مصروف أو دخل لك لبدء متابعة ميزانيتك ووتيرة إنفاقك.'
+                  : 'Log your first expense or income to begin evaluating your spending pace and budget.'
+              }
+              mascotMood="curious"
+              actionLabel={t('action_add')}
+              onAction={() => setActivePage('workspace')}
+              className="py-8 border-0 bg-transparent"
+            />
           ) : (
             <div className="space-y-2.5">
               {recentTransactions.map((tx) => {

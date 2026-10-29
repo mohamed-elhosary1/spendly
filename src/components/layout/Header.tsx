@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Plus, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Sparkles, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
 import { MONTH_NAMES } from '@/lib/dateUtils';

@@ -69,7 +69,7 @@ export const OnboardingModal: React.FC = () => {
       });
 
       // 3. Save category budgets if entered
-      const catBudgetItems: { category_id: string; amount: number; user_id: string }[] = [];
+      const catBudgetItems: { category_id: string; amount: number }[] = [];
       const foodCat = categories.find((c) => c.name.toLowerCase().includes('food'));
       const transCat = categories.find((c) => c.name.toLowerCase().includes('transport'));
       const grocCat = categories.find((c) => c.name.toLowerCase().includes('grocer'));
@@ -78,21 +78,18 @@ export const OnboardingModal: React.FC = () => {
         catBudgetItems.push({
           category_id: foodCat.id,
           amount: parseFloat(foodBudget),
-          user_id: user?.id || 'local-user',
         });
       }
       if (transCat && parseFloat(transportBudget) > 0) {
         catBudgetItems.push({
           category_id: transCat.id,
           amount: parseFloat(transportBudget),
-          user_id: user?.id || 'local-user',
         });
       }
       if (grocCat && parseFloat(groceriesBudget) > 0) {
         catBudgetItems.push({
           category_id: grocCat.id,
           amount: parseFloat(groceriesBudget),
-          user_id: user?.id || 'local-user',
         });
       }
 

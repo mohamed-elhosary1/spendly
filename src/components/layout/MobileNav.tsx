@@ -3,9 +3,9 @@ import {
   LayoutDashboard,
   Sparkles,
   Receipt,
-  PieChart,
+  Wallet,
   Menu,
-  Heart,
+  ShoppingBag,
   PiggyBank,
   BarChart3,
   Settings,
@@ -28,11 +28,11 @@ export const MobileNav: React.FC = () => {
     { id: 'dashboard', label: t('nav_dashboard'), icon: LayoutDashboard },
     { id: 'workspace', label: t('nav_workspace'), icon: Sparkles },
     { id: 'transactions', label: t('nav_transactions'), icon: Receipt },
-    { id: 'budgets', label: t('nav_budgets'), icon: PieChart },
+    { id: 'budgets', label: t('nav_budgets'), icon: Wallet },
   ];
 
   const secondaryItems: { id: AppPage; label: string; icon: React.FC<any> }[] = [
-    { id: 'wishlist', label: t('nav_wishlist'), icon: Heart },
+    { id: 'wishlist', label: t('nav_wishlist'), icon: ShoppingBag },
     { id: 'savings', label: t('nav_savings'), icon: PiggyBank },
     { id: 'reports', label: t('nav_reports'), icon: BarChart3 },
     { id: 'settings', label: t('nav_settings'), icon: Settings },

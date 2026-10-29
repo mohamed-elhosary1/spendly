@@ -69,6 +69,26 @@ export async function signOutUser(): Promise<{ error?: string }> {
   return {};
 }
 
+export async function signInWithGoogle(): Promise<{ error?: string }> {
+  const supabase = getSupabase();
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+  return {};
+}
+
 export async function getCurrentUser(): Promise<User | null> {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();

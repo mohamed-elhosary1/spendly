@@ -42,8 +42,7 @@ export const SettingsPage: React.FC = () => {
     setTheme,
     currency,
     setCurrency,
-    loadDemoData,
-    clearAllData,
+    clearUserData,
     recurringTransactions,
     saveRecurringTransaction,
     deleteRecurringTransaction,
@@ -62,6 +61,7 @@ export const SettingsPage: React.FC = () => {
 
   // Recurring subscription modal
   const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);
+  const [isConfirmClearOpen, setIsConfirmClearOpen] = useState(false);
   const [recDescription, setRecDescription] = useState('');
   const [recAmount, setRecAmount] = useState('');
   const [recFrequency, setRecFrequency] = useState<RecurringFrequency>('monthly');
@@ -297,40 +297,68 @@ export const SettingsPage: React.FC = () => {
         )}
       </Card>
 
-      {/* 4. Demo Data Helper */}
+      {/* 4. Account Data Management */}
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2.5 pb-2 border-b border-border/60">
-          <Database className="h-5 w-5 text-amber-500" />
+          <Database className="h-5 w-5 text-rose-500" />
           <div>
-            <h3 className="text-base font-bold text-foreground">Sample Data & Account Actions</h3>
+            <h3 className="text-base font-bold text-foreground">Data Management</h3>
             <p className="text-xs text-muted-foreground">
-              Load realistic sample records to test your dashboard or clear all records from your account.
+              Manage your personal financial records or reset your workspace if you wish to start fresh.
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={loadDemoData}
-            className="text-xs font-semibold gap-1.5"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span>{t('load_demo_btn')}</span>
-          </Button>
-
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <p className="text-xs text-muted-foreground max-w-md">
+            Resetting your account permanently removes all your transactions, custom budgets, wishlist items, and savings targets from Supabase cloud storage.
+          </p>
           <Button
             size="sm"
             variant="destructive"
-            onClick={clearAllData}
+            onClick={() => setIsConfirmClearOpen(true)}
             className="text-xs font-semibold gap-1.5"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span>Clear All Data</span>
+            <span>Reset My Records</span>
           </Button>
         </div>
       </Card>
+
+      {/* Clear Account Data Confirmation Modal */}
+      <Modal
+        isOpen={isConfirmClearOpen}
+        onClose={() => setIsConfirmClearOpen(false)}
+        title="Reset Account Financial Records"
+      >
+        <div className="space-y-4">
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            Are you sure you want to delete all transactions, budgets, wishlist items, and savings goals from your account? This action cannot be undone.
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/70">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsConfirmClearOpen(false)}
+            >
+              {t('action_cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="font-semibold"
+              onClick={async () => {
+                await clearUserData();
+                setIsConfirmClearOpen(false);
+              }}
+            >
+              Confirm Reset
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add Recurring Template Modal */}
       <Modal

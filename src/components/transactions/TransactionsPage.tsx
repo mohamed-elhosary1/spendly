@@ -23,6 +23,7 @@ import { Select } from '@/components/ui/Select';
 import { Modal } from '@/components/ui/Modal';
 import { Badge } from '@/components/ui/Badge';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export const TransactionsPage: React.FC = () => {
   const {
@@ -98,7 +99,6 @@ export const TransactionsPage: React.FC = () => {
       });
     } else {
       await addTransaction({
-        user_id: 'local-user',
         description: description.trim(),
         amount: amt,
         currency,
@@ -325,9 +325,18 @@ export const TransactionsPage: React.FC = () => {
       {/* Transaction List */}
       <div className="space-y-2.5">
         {filteredTransactions.length === 0 ? (
-          <Card className="py-12 text-center text-muted-foreground text-xs">
-            {t('empty_transactions')}
-          </Card>
+          <EmptyState
+            title={searchTerm ? 'No matching transactions' : 'No transactions recorded yet'}
+            description={
+              searchTerm
+                ? `No transactions match "${searchTerm}". Try a different term or clear filters.`
+                : 'Add your first expense or income to start tracking your daily spending pace.'
+            }
+            mascotMood="curious"
+            actionLabel={searchTerm ? 'Clear Search' : t('action_add')}
+            onAction={searchTerm ? () => setSearchTerm('') : openAddModal}
+            className="py-12"
+          />
         ) : (
           filteredTransactions.map((tx) => {
             const cat = categories.find((c) => c.id === tx.category_id);
