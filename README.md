@@ -4,6 +4,22 @@
 
 ---
 
+## 🌐 Live Online Hosting
+
+Spendly is deployed and hosted online:
+
+- **Live URL**: [https://mohamed-elhosary1.github.io/spendly/](https://mohamed-elhosary1.github.io/spendly/)
+- **GitHub Repository**: [https://github.com/mohamed-elhosary1/spendly](https://github.com/mohamed-elhosary1/spendly)
+
+### 1-Click Cloud Deployments
+
+Deploy your own instance of Spendly with one click to any modern cloud hosting platform:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/mohamed-elhosary1/spendly)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/mohamed-elhosary1/spendly)
+
+---
+
 ## 1. Product Highlights & The 5 Core Questions
 
 Spendly answers the five critical personal finance questions at a glance:
