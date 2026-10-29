@@ -28,6 +28,7 @@ import {
 import { formatCurrency } from '@/lib/currency';
 import { getTodayDateString, formatDateString } from '@/lib/dateUtils';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { TiltCard } from '@/components/ui/TiltCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -394,33 +395,36 @@ export const WorkspacePage: React.FC = () => {
       {activeTab === 'nl' && (
         <div className="space-y-6">
           {/* Main Conversational Input Bar */}
-          <Card className="p-3 sm:p-4 shadow-md border-emerald-500/20 focus-within:border-emerald-500 transition-all">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleProcessInput();
-                    }
-                  }}
-                  placeholder={t('workspace_input_placeholder')}
-                  className="w-full bg-transparent px-3 py-2 text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
-                />
+          <div className="relative group rounded-2xl p-[1px] bg-gradient-to-r from-emerald-500/40 via-teal-500/20 to-emerald-500/40 shadow-[0_0_25px_rgba(16,185,129,0.12)] focus-within:shadow-[0_0_35px_rgba(16,185,129,0.28)] transition-all duration-300">
+            <div className="rounded-2xl bg-card/90 backdrop-blur-xl p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="relative flex-1 flex items-center">
+                  <Sparkles className="h-5 w-5 text-emerald-400 me-2.5 shrink-0 animate-pulse" />
+                  <input
+                    type="text"
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleProcessInput();
+                      }
+                    }}
+                    placeholder={t('workspace_input_placeholder')}
+                    className="w-full bg-transparent text-sm sm:text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                  />
+                </div>
+                <Button
+                  onClick={() => handleProcessInput()}
+                  disabled={!inputText.trim()}
+                  className="gap-2 shrink-0 font-bold shadow-lg shadow-emerald-500/25"
+                >
+                  <span>{t('workspace_action_parse')}</span>
+                  <Send className={isRTL ? 'rotate-180 h-4 w-4' : 'h-4 w-4'} />
+                </Button>
               </div>
-              <Button
-                onClick={() => handleProcessInput()}
-                disabled={!inputText.trim()}
-                className="gap-2 shrink-0 font-semibold"
-              >
-                <span>{t('workspace_action_parse')}</span>
-                <Send className={isRTL ? 'rotate-180 h-4 w-4' : 'h-4 w-4'} />
-              </Button>
             </div>
-          </Card>
+          </div>
 
           {/* Quick Clickable Example Prompts */}
           <div className="space-y-2">
@@ -521,12 +525,14 @@ export const WorkspacePage: React.FC = () => {
                 {stagedItems.map((item) => {
                   const cat = categories.find((c) => c.id === item.category_id);
                   return (
-                    <Card
+                    <TiltCard
                       key={item.temp_id}
-                      className={`p-4 border transition-all ${
+                      maxTilt={2.5}
+                      glowColor={item.needs_review ? '245, 158, 11' : '16, 185, 129'}
+                      className={`p-4 ${
                         item.needs_review
                           ? 'border-amber-500/50 bg-amber-500/5'
-                          : 'border-border/80 bg-card'
+                          : 'border-border/80'
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -603,7 +609,7 @@ export const WorkspacePage: React.FC = () => {
                           </button>
                         </div>
                       </div>
-                    </Card>
+                    </TiltCard>
                   );
                 })}
               </div>

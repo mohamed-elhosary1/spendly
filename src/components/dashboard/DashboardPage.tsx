@@ -26,6 +26,7 @@ import { useTranslation } from '@/lib/i18n';
 import { formatCurrency } from '@/lib/currency';
 import { formatDateString, parseISO } from '@/lib/dateUtils';
 import { Card } from '@/components/ui/Card';
+import { TiltCard } from '@/components/ui/TiltCard';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Button } from '@/components/ui/Button';
@@ -191,12 +192,17 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* 1. Daily Financial Assessment Banner */}
-      <Card className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/5 via-teal-500/5 to-transparent relative overflow-hidden">
+      <TiltCard
+        maxTilt={2}
+        glowColor="16, 185, 129"
+        className="border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent relative overflow-hidden"
+      >
         <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex items-center gap-2.5">
-              <Badge variant={assessmentBadgeVariant} className="px-3 py-1 font-semibold text-xs">
-                {language === 'ar' ? assessment_title_ar : assessment_title}
+              <Badge variant={assessmentBadgeVariant} className="px-3 py-1 font-semibold text-xs flex items-center gap-1.5 shadow-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-current animate-ping" />
+                <span>{language === 'ar' ? assessment_title_ar : assessment_title}</span>
               </Badge>
               {is_preliminary && (
                 <Badge variant="outline" className="text-[10px] text-muted-foreground">
@@ -213,25 +219,27 @@ export const DashboardPage: React.FC = () => {
             <Button
               size="sm"
               onClick={() => setActivePage('workspace')}
-              className="gap-1.5 shadow-sm font-semibold"
+              className="gap-2 shadow-lg shadow-emerald-600/25 font-bold hover:shadow-emerald-500/35 transition-all group"
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-4 w-4 text-emerald-200 transition-transform group-hover:rotate-12" />
               <span>{t('nav_workspace')}</span>
             </Button>
           </div>
         </div>
-      </Card>
+      </TiltCard>
 
-      {/* 2. Top Summary Metric Cards */}
+      {/* 2. Top Summary Metric Cards with 3D Tilt & Lighting */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {/* Monthly Budget */}
-        <Card className="p-4 sm:p-5">
+        <TiltCard maxTilt={4} glowColor="16, 185, 129" className="p-4 sm:p-5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold">{t('metric_monthly_budget')}</span>
-            <Wallet className="h-4 w-4 text-emerald-500" />
+            <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <Wallet className="h-4 w-4" />
+            </div>
           </div>
-          <div className="mt-2">
-            <div className="text-lg sm:text-2xl font-black text-foreground">
+          <div className="mt-2.5">
+            <div className="text-lg sm:text-2xl font-black text-foreground tracking-tight">
               {formatCurrency(monthly_budget, currency, language, { showDecimals: false })}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -240,33 +248,41 @@ export const DashboardPage: React.FC = () => {
                 : 'No budget set'}
             </p>
           </div>
-        </Card>
+        </TiltCard>
 
         {/* Total Expenses */}
-        <Card className="p-4 sm:p-5">
+        <TiltCard maxTilt={4} glowColor="244, 63, 94" className="p-4 sm:p-5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold">{t('metric_total_expenses')}</span>
-            <ArrowDownRight className="h-4 w-4 text-rose-500" />
+            <div className="h-8 w-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+              <ArrowDownRight className="h-4 w-4" />
+            </div>
           </div>
-          <div className="mt-2">
-            <div className="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400">
+          <div className="mt-2.5">
+            <div className="text-lg sm:text-2xl font-black text-rose-600 dark:text-rose-400 tracking-tight">
               {formatCurrency(total_expenses, currency, language, { showDecimals: false })}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               {monthTransactions.filter((t) => t.type === 'expense').length} transactions
             </p>
           </div>
-        </Card>
+        </TiltCard>
 
         {/* Remaining Budget */}
-        <Card className="p-4 sm:p-5">
+        <TiltCard
+          maxTilt={4.2}
+          glowColor={remaining_budget < 0 ? '244, 63, 94' : '6, 182, 212'}
+          className="p-4 sm:p-5 border-sky-500/30"
+        >
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold">{t('metric_remaining_budget')}</span>
-            <TrendingDown className="h-4 w-4 text-sky-500" />
+            <div className="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+              <TrendingDown className="h-4 w-4" />
+            </div>
           </div>
-          <div className="mt-2">
+          <div className="mt-2.5">
             <div
-              className={`text-lg sm:text-2xl font-black ${
+              className={`text-lg sm:text-2xl font-black tracking-tight ${
                 remaining_budget < 0 ? 'text-rose-500' : 'text-foreground'
               }`}
             >
@@ -276,27 +292,29 @@ export const DashboardPage: React.FC = () => {
               {remaining_days} days left in cycle
             </p>
           </div>
-        </Card>
+        </TiltCard>
 
         {/* Total Income */}
-        <Card className="p-4 sm:p-5">
+        <TiltCard maxTilt={4} glowColor="16, 185, 129" className="p-4 sm:p-5">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-semibold">{t('metric_total_income')}</span>
-            <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+            <div className="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <ArrowUpRight className="h-4 w-4" />
+            </div>
           </div>
-          <div className="mt-2">
-            <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
+          <div className="mt-2.5">
+            <div className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
               {formatCurrency(totalIncome, currency, language, { showDecimals: false })}
             </div>
             <p className="text-[11px] text-muted-foreground mt-0.5">
               Net: {formatCurrency(totalIncome - total_expenses, currency, language, { showDecimals: false })}
             </p>
           </div>
-        </Card>
+        </TiltCard>
       </div>
 
       {/* 3. Monthly Budget Progress & Pacing Metrics */}
-      <Card className="p-5 sm:p-6 space-y-5">
+      <TiltCard maxTilt={2.2} glowColor="16, 185, 129" className="p-5 sm:p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-base font-bold text-foreground">{t('metric_monthly_budget')} Progress</h3>
@@ -357,12 +375,12 @@ export const DashboardPage: React.FC = () => {
             </span>
           </div>
         </div>
-      </Card>
+      </TiltCard>
 
       {/* 4. Charts Section: Daily Trend + Category Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Daily Spending Trend (2 cols on lg) */}
-        <Card className="lg:col-span-2 p-5 sm:p-6 space-y-4">
+        <TiltCard maxTilt={1.8} glowColor="16, 185, 129" className="lg:col-span-2 p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-foreground">{t('chart_daily_spending')}</h3>
@@ -373,6 +391,12 @@ export const DashboardPage: React.FC = () => {
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dailyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="spendingBarGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#059669" stopOpacity={0.4} />
+                  </linearGradient>
+                </defs>
                 <XAxis
                   dataKey="displayDay"
                   stroke="#888888"
@@ -393,9 +417,9 @@ export const DashboardPage: React.FC = () => {
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="rounded-xl border border-border bg-card p-2.5 shadow-lg text-xs">
-                          <p className="font-semibold text-foreground">Day {data.day}</p>
-                          <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                        <div className="rounded-xl border border-emerald-500/30 bg-background/95 backdrop-blur-md p-2.5 shadow-xl shadow-black/40 text-xs">
+                          <p className="font-semibold text-muted-foreground">Day {data.day}</p>
+                          <p className="font-black text-emerald-500 text-sm mt-0.5">
                             {formatCurrency(data.amount, currency, language)}
                           </p>
                         </div>
@@ -404,14 +428,14 @@ export const DashboardPage: React.FC = () => {
                     return null;
                   }}
                 />
-                <Bar dataKey="amount" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="amount" fill="url(#spendingBarGrad)" radius={[5, 5, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </TiltCard>
 
         {/* Expenses by Category (1 col on lg) */}
-        <Card className="p-5 sm:p-6 space-y-4">
+        <TiltCard maxTilt={1.8} glowColor="20, 184, 166" className="p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-foreground">{t('chart_category_breakdown')}</h3>
@@ -445,7 +469,20 @@ export const DashboardPage: React.FC = () => {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(val: any) => [formatCurrency(Number(val), currency, language), 'Spent']}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0];
+                          return (
+                            <div className="rounded-xl border border-teal-500/30 bg-background/95 backdrop-blur-md p-2.5 shadow-xl shadow-black/40 text-xs">
+                              <p className="font-semibold text-foreground/90">{data.name}</p>
+                              <p className="font-bold text-teal-400 text-sm mt-0.5">
+                                {formatCurrency(Number(data.value), currency, language)}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -475,13 +512,13 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
           )}
-        </Card>
+        </TiltCard>
       </div>
 
       {/* 5. Budget Alerts & Recent Transactions Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Budget Alerts (1 col) */}
-        <Card className="p-5 sm:p-6 space-y-4">
+        <TiltCard maxTilt={2} glowColor="245, 158, 11" className="p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-foreground">{t('budget_alerts')}</h3>
             <AlertTriangle className="h-4 w-4 text-amber-500" />
@@ -511,10 +548,10 @@ export const DashboardPage: React.FC = () => {
               ))}
             </div>
           )}
-        </Card>
+        </TiltCard>
 
         {/* Recent Transactions (2 cols) */}
-        <Card className="lg:col-span-2 p-5 sm:p-6 space-y-4">
+        <TiltCard maxTilt={1.8} glowColor="16, 185, 129" className="lg:col-span-2 p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-foreground">{t('recent_transactions')}</h3>
@@ -552,7 +589,7 @@ export const DashboardPage: React.FC = () => {
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center justify-between p-3 rounded-2xl border border-border/50 bg-secondary/30 hover:bg-secondary/60 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-2xl border border-border/50 bg-secondary/20 hover:bg-secondary/60 hover:border-emerald-500/30 transition-all duration-200 group"
                   >
                     <div className="flex items-center gap-3">
                       <CategoryIcon
@@ -586,7 +623,7 @@ export const DashboardPage: React.FC = () => {
               })}
             </div>
           )}
-        </Card>
+        </TiltCard>
       </div>
     </div>
   );

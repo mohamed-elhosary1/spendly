@@ -46,7 +46,7 @@ export const MobileNav: React.FC = () => {
   return (
     <>
       {/* Bottom Bar for Mobile */}
-      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card/90 backdrop-blur-lg border-t border-border/80 px-2 py-1.5 flex items-center justify-around shadow-lg">
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card/85 backdrop-blur-xl border-t border-emerald-500/15 px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_25px_rgba(0,0,0,0.4)]">
         {primaryItems.map((item) => {
           const Icon = item.icon;
           const isActive = activePage === item.id;
@@ -55,12 +55,15 @@ export const MobileNav: React.FC = () => {
               key={item.id}
               onClick={() => handleSelectPage(item.id)}
               className={cn(
-                'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 min-w-[56px]',
-                isActive ? 'text-emerald-600 dark:text-emerald-400 font-bold scale-105' : 'text-muted-foreground'
+                'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all duration-150 min-w-[56px] relative',
+                isActive ? 'text-emerald-400 font-bold scale-105' : 'text-muted-foreground'
               )}
             >
-              <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5]')} />
+              <Icon className={cn('h-5 w-5', isActive && 'stroke-[2.5] drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]')} />
               <span className="text-[10px] mt-0.5 tracking-tight">{item.label}</span>
+              {isActive && (
+                <span className="absolute -bottom-1 h-1 w-4 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+              )}
             </button>
           );
         })}
@@ -69,14 +72,17 @@ export const MobileNav: React.FC = () => {
         <button
           onClick={() => setIsDrawerOpen(true)}
           className={cn(
-            'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all min-w-[56px]',
+            'flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all min-w-[56px] relative',
             ['wishlist', 'savings', 'reports', 'settings'].includes(activePage)
-              ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+              ? 'text-emerald-400 font-bold scale-105'
               : 'text-muted-foreground'
           )}
         >
-          <Menu className="h-5 w-5" />
+          <Menu className={cn('h-5 w-5', ['wishlist', 'savings', 'reports', 'settings'].includes(activePage) && 'stroke-[2.5] drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]')} />
           <span className="text-[10px] mt-0.5 tracking-tight">More</span>
+          {['wishlist', 'savings', 'reports', 'settings'].includes(activePage) && (
+            <span className="absolute -bottom-1 h-1 w-4 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+          )}
         </button>
       </nav>
 

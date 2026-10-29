@@ -67,7 +67,7 @@ export const Sidebar: React.FC = () => {
   const monthName = MONTH_NAMES[language]?.[selectedMonth - 1] || MONTH_NAMES.en[selectedMonth - 1];
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col border-e border-border/70 bg-card/70 backdrop-blur-md px-4 py-5 shrink-0 select-none justify-between h-screen sticky top-0">
+    <aside className="hidden lg:flex w-64 flex-col border-e border-emerald-500/10 bg-card/60 backdrop-blur-xl px-4 py-5 shrink-0 select-none justify-between h-screen sticky top-0 z-30">
       <div className="space-y-6">
         {/* Brand Logo */}
         <div className="flex items-center justify-between px-2">
@@ -136,16 +136,19 @@ export const Sidebar: React.FC = () => {
                 key={item.id}
                 onClick={() => setActivePage(item.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group',
+                  'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group relative overflow-hidden',
                   isActive
-                    ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30 font-semibold'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_18px_rgba(16,185,129,0.18)] font-semibold'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
                 )}
               >
+                {isActive && (
+                  <span className="absolute start-0 inset-y-2 w-1 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
+                )}
                 <Icon
                   className={cn(
                     'h-4 w-4 transition-transform group-hover:scale-110',
-                    isActive ? 'text-white' : 'text-muted-foreground'
+                    isActive ? 'text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]' : 'text-muted-foreground'
                   )}
                 />
                 <span>{item.label}</span>

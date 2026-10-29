@@ -25,6 +25,7 @@ import { DashboardSkeleton } from '@/components/ui/DashboardSkeleton';
 import { TransactionsSkeleton } from '@/components/ui/TransactionsSkeleton';
 import { BudgetsSkeleton } from '@/components/ui/BudgetsSkeleton';
 import { WishlistSkeleton } from '@/components/ui/WishlistSkeleton';
+import { AmbientBackground } from '@/components/ui/AmbientBackground';
 
 const AppContent: React.FC = () => {
   const {
@@ -118,7 +119,10 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="relative flex min-h-screen bg-background/95 text-foreground overflow-x-hidden selection:bg-emerald-500/20 selection:text-emerald-500">
+      {/* Interactive Ambient Particle & Lighting Environment */}
+      <AmbientBackground />
+
       {/* Desktop Sidebar Navigation */}
       <Sidebar />
 
