@@ -81,21 +81,6 @@ const AppContent: React.FC = () => {
 
   // 4. Page Rendering with Context-Aware Skeleton Fallbacks & Smooth Transitions
   const renderActivePage = () => {
-    if (isFetchingData) {
-      switch (activePage) {
-        case 'dashboard':
-          return <DashboardSkeleton />;
-        case 'transactions':
-          return <TransactionsSkeleton />;
-        case 'budgets':
-          return <BudgetsSkeleton />;
-        case 'wishlist':
-          return <WishlistSkeleton />;
-        default:
-          return <DashboardSkeleton />;
-      }
-    }
-
     switch (activePage) {
       case 'dashboard':
         return <DashboardPage />;
@@ -122,6 +107,11 @@ const AppContent: React.FC = () => {
     <div className="relative flex min-h-screen bg-background/95 text-foreground overflow-x-hidden selection:bg-emerald-500/20 selection:text-emerald-500">
       {/* Interactive Ambient Particle & Lighting Environment */}
       <AmbientBackground />
+
+      {/* Subtle background sync indicator (never replaces page with skeletons) */}
+      {isFetchingData && (
+        <div className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 animate-pulse z-50 pointer-events-none" />
+      )}
 
       {/* Desktop Sidebar Navigation */}
       <Sidebar />

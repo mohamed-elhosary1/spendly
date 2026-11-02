@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Sparkles,
   Send,
@@ -43,6 +43,7 @@ export const WorkspacePage: React.FC = () => {
     currency,
     language,
     addTransaction,
+    addTransactionsBatch,
     updateTransaction,
     deleteTransaction,
     dailySpendingAnalysis,
@@ -71,6 +72,9 @@ export const WorkspacePage: React.FC = () => {
   } | null>(null);
 
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const isSavingRef = useRef<boolean>(false);
+  const [isManualSaving, setIsManualSaving] = useState<boolean>(false);
+  const isManualSavingRef = useRef<boolean>(false);
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
   // Manual fallback form state
@@ -273,13 +277,17 @@ export const WorkspacePage: React.FC = () => {
   };
 
   const handleConfirmSaveAll = async () => {
-    if (stagedItems.length === 0) return;
+    if (isSavingRef.current || stagedItems.length === 0) return;
+    isSavingRef.current = true;
     setIsSaving(true);
 
+    const itemsToSave = [...stagedItems];
+    setStagedItems([]);
+    setInputText('');
+
     try {
-      for (const item of stagedItems) {
-        await addTransaction({
-          user_id: user?.id || 'local-user',
+      await addTransactionsBatch(
+        itemsToSave.map((item) => ({
           type: item.type,
           amount: item.amount,
           currency: item.currency,
@@ -287,19 +295,19 @@ export const WorkspacePage: React.FC = () => {
           description: item.description,
           transaction_date: item.transaction_date || getTodayDateString(),
           notes: `Parsed from: "${item.original_text}"`,
-        });
-      }
+        }))
+      );
 
       setSaveSuccessMessage(
         language === 'ar'
-          ? `تم حفظ ${stagedItems.length} معاملات بنجاح وتحديث أرقام لوحة التحكم!`
-          : `Successfully saved ${stagedItems.length} transaction${stagedItems.length > 1 ? 's' : ''}! Dashboard figures updated.`
+          ? `تم حفظ ${itemsToSave.length} معاملات بنجاح وتحديث الحساب فوراً!`
+          : `Successfully saved ${itemsToSave.length} transaction${itemsToSave.length > 1 ? 's' : ''}! Account updated.`
       );
-      setStagedItems([]);
-      setInputText('');
     } catch (err) {
       console.error('Failed to save transactions:', err);
+      setStagedItems(itemsToSave);
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };
@@ -331,25 +339,36 @@ export const WorkspacePage: React.FC = () => {
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isManualSavingRef.current) return;
     const amt = parseFloat(manualAmount);
     if (isNaN(amt) || amt <= 0 || !manualDescription.trim()) return;
 
-    await addTransaction({
-      type: manualType,
-      amount: amt,
-      currency,
-      category_id: manualCategory || categories[0]?.id || '',
-      description: manualDescription.trim(),
-      transaction_date: manualDate,
-      notes: manualNotes.trim() || undefined,
-    });
+    isManualSavingRef.current = true;
+    setIsManualSaving(true);
 
-    setSaveSuccessMessage(
-      language === 'ar' ? 'تم تسجيل المعاملة بنجاح!' : 'Transaction recorded successfully!'
-    );
-    setManualDescription('');
-    setManualAmount('');
-    setManualNotes('');
+    try {
+      await addTransaction({
+        type: manualType,
+        amount: amt,
+        currency,
+        category_id: manualCategory || categories[0]?.id || '',
+        description: manualDescription.trim(),
+        transaction_date: manualDate || getTodayDateString(),
+        notes: manualNotes.trim() || undefined,
+      });
+
+      setSaveSuccessMessage(
+        language === 'ar' ? 'تم تسجيل المعاملة بنجاح!' : 'Transaction recorded successfully!'
+      );
+      setManualDescription('');
+      setManualAmount('');
+      setManualNotes('');
+    } catch (err) {
+      console.error('Failed to save manual transaction:', err);
+    } finally {
+      isManualSavingRef.current = false;
+      setIsManualSaving(false);
+    }
   };
 
   return (
@@ -732,7 +751,7 @@ export const WorkspacePage: React.FC = () => {
               onChange={(e) => setManualNotes(e.target.value)}
             />
 
-            <Button type="submit" className="w-full font-bold">
+            <Button type="submit" className="w-full font-bold" isLoading={isManualSaving} disabled={isManualSaving}>
               <Plus className="h-4 w-4" />
               <span>{t('action_save')}</span>
             </Button>

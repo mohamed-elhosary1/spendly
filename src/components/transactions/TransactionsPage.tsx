@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   Search,
   Filter,
@@ -47,6 +47,8 @@ export const TransactionsPage: React.FC = () => {
 
   // Edit / Add modal
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   // Form state
@@ -84,32 +86,42 @@ export const TransactionsPage: React.FC = () => {
 
   const handleSaveTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
     const amt = parseFloat(amount);
     if (isNaN(amt) || amt <= 0 || !description.trim()) return;
 
-    if (editingTransaction) {
-      await updateTransaction({
-        ...editingTransaction,
-        description: description.trim(),
-        amount: amt,
-        type,
-        category_id: categoryId,
-        transaction_date: transactionDate,
-        notes: notes.trim() || undefined,
-      });
-    } else {
-      await addTransaction({
-        description: description.trim(),
-        amount: amt,
-        currency,
-        type,
-        category_id: categoryId,
-        transaction_date: transactionDate,
-        notes: notes.trim() || undefined,
-      });
-    }
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
 
-    setIsModalOpen(false);
+    try {
+      if (editingTransaction) {
+        await updateTransaction({
+          ...editingTransaction,
+          description: description.trim(),
+          amount: amt,
+          type,
+          category_id: categoryId,
+          transaction_date: transactionDate,
+          notes: notes.trim() || undefined,
+        });
+      } else {
+        await addTransaction({
+          description: description.trim(),
+          amount: amt,
+          currency,
+          type,
+          category_id: categoryId,
+          transaction_date: transactionDate,
+          notes: notes.trim() || undefined,
+        });
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error('Failed to save transaction:', err);
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -480,7 +492,7 @@ export const TransactionsPage: React.FC = () => {
             <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               {t('action_cancel')}
             </Button>
-            <Button type="submit" size="sm" className="font-semibold">
+            <Button type="submit" size="sm" className="font-semibold" isLoading={isSubmitting} disabled={isSubmitting}>
               {t('action_save')}
             </Button>
           </div>

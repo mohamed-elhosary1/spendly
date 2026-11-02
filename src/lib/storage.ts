@@ -135,8 +135,11 @@ export class StorageService {
     tx: Omit<Transaction, 'id' | 'user_id'> & { id?: string; user_id?: string }
   ): Promise<Transaction> {
     const supabase = getSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || tx.user_id;
+    let userId = tx.user_id;
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      userId = user?.id;
+    }
 
     const fullTx: Transaction = {
       ...tx,
@@ -153,7 +156,35 @@ export class StorageService {
       .single();
 
     if (error) throw error;
-    return data as Transaction;
+    return (data || fullTx) as Transaction;
+  }
+
+  static async createTransactionsBatch(
+    items: (Omit<Transaction, 'id' | 'user_id'> & { id?: string; user_id?: string })[]
+  ): Promise<Transaction[]> {
+    if (items.length === 0) return [];
+    const supabase = getSupabase();
+    let defaultUserId = items[0]?.user_id;
+    if (!defaultUserId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      defaultUserId = user?.id;
+    }
+
+    const fullTxs: Transaction[] = items.map((tx) => ({
+      ...tx,
+      user_id: tx.user_id || defaultUserId!,
+      id: tx.id || generateUUID(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert(fullTxs)
+      .select();
+
+    if (error) throw error;
+    return (data || fullTxs) as Transaction[];
   }
 
   static async updateTransaction(tx: Transaction): Promise<Transaction> {

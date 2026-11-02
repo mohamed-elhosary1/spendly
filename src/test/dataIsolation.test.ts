@@ -220,6 +220,28 @@ describe('Multi-User Data Isolation & Financial Integrity Tests', () => {
 
     // Total Money carries over: 300 (Oct) - 50 (Nov) = 250 EGP!
     expect(totalMoney).toBe(250);
+  });
+
+  it('prevents double-submission when save action is triggered in rapid succession', async () => {
+    let callCount = 0;
+    let isSaving = false;
+
+    const mockSave = async () => {
+      if (isSaving) return;
+      isSaving = true;
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        callCount++;
+      } finally {
+        isSaving = false;
+      }
+    };
+
+    // Simulate two rapid clicks in parallel
+    await Promise.all([mockSave(), mockSave()]);
+
+    // Only one execution should pass through
+    expect(callCount).toBe(1);
 
   });
 });

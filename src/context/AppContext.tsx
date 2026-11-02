@@ -20,6 +20,7 @@ import { calculateDailySpending } from '@/lib/spendingCalculator';
 import { getSupabase } from '@/lib/supabase';
 import { addMoney, subtractMoney } from '@/lib/currency';
 import { useToast } from '@/components/ui/Toast';
+import { generateUUID } from '@/lib/utils';
 
 export type AppPage =
   | 'dashboard'
@@ -72,7 +73,8 @@ interface AppContextType {
   monthlyNetCashflow: number;
 
   // Actions
-  addTransaction: (tx: Omit<Transaction, 'id' | 'user_id'> & { user_id?: string }) => Promise<Transaction>;
+  addTransaction: (tx: Omit<Transaction, 'id' | 'user_id'> & { id?: string; user_id?: string }) => Promise<Transaction>;
+  addTransactionsBatch: (items: (Omit<Transaction, 'id' | 'user_id'> & { user_id?: string })[]) => Promise<Transaction[]>;
   updateTransaction: (tx: Transaction) => Promise<Transaction>;
   deleteTransaction: (id: string) => Promise<void>;
   saveMonthlyBudget: (
@@ -255,8 +257,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const supabase = getSupabase();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
+        // Tab focus / background token refreshes: do NOT refetch all tables
+        if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+          return;
+        }
+        if (event === 'SIGNED_IN' && user?.id === session.user.id) {
+          return;
+        }
         loadData(false);
       } else {
         setIsAuthenticated(false);
@@ -390,22 +399,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [transactions, selectedYear, selectedMonth]);
 
   // --- ACTIONS WITH USER ISOLATION & FEEDBACK ---
-  const addTransaction = async (tx: Omit<Transaction, 'id' | 'user_id'> & { user_id?: string }) => {
+  const addTransaction = async (tx: Omit<Transaction, 'id' | 'user_id'> & { id?: string; user_id?: string }) => {
     if (!user) throw new Error('Authentication required.');
+    
+    // Instant optimistic update (0ms UI feedback)
+    const localId = tx.id || generateUUID();
+    const optimisticTx: Transaction = {
+      ...tx,
+      id: localId,
+      user_id: user.id,
+      currency: tx.currency || user.currency || 'EGP',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    setTransactions((prev) => [optimisticTx, ...prev]);
+
     try {
       const created = await StorageService.createTransaction({
         ...tx,
+        id: localId,
         user_id: user.id,
         currency: tx.currency || user.currency || 'EGP',
       });
-      setTransactions((prev) => [created, ...prev]);
+      setTransactions((prev) => prev.map((t) => (t.id === localId ? created : t)));
       toast.success(
         `${created.type === 'income' ? 'Income' : 'Expense'} of ${created.amount} ${created.currency} recorded.`,
         'Transaction Saved'
       );
       return created;
     } catch (err: any) {
+      // Rollback on error
+      setTransactions((prev) => prev.filter((t) => t.id !== localId));
       toast.error(err?.message || 'Failed to record transaction.');
+      throw err;
+    }
+  };
+
+  const addTransactionsBatch = async (
+    items: (Omit<Transaction, 'id' | 'user_id'> & { id?: string; user_id?: string })[]
+  ) => {
+
+    if (!user) throw new Error('Authentication required.');
+    if (items.length === 0) return [];
+
+    const optimisticItems: Transaction[] = items.map((item) => ({
+      ...item,
+      id: item.id || generateUUID(),
+      user_id: user.id,
+      currency: item.currency || user.currency || 'EGP',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    // Instant optimistic update
+    setTransactions((prev) => [...optimisticItems, ...prev]);
+
+    try {
+      const created = await StorageService.createTransactionsBatch(optimisticItems);
+      toast.success(
+        `Saved ${created.length} transaction${created.length > 1 ? 's' : ''} successfully!`,
+        'Transactions Saved'
+      );
+      return created;
+    } catch (err: any) {
+      const ids = new Set(optimisticItems.map((o) => o.id));
+      setTransactions((prev) => prev.filter((t) => !ids.has(t.id)));
+      toast.error(err?.message || 'Failed to record transactions.');
       throw err;
     }
   };
@@ -738,6 +798,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         monthlyExpenses,
         monthlyNetCashflow,
         addTransaction,
+        addTransactionsBatch,
         updateTransaction,
         deleteTransaction,
         saveMonthlyBudget,
