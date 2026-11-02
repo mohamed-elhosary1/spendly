@@ -199,6 +199,26 @@ export function parseConversationalCommand(
     };
   }
 
+  // 2b. Query: Total Money / Available Balance
+  // "How much money do I have?" / "What is my total balance?" / "معايا كام؟" / "كم رصيدي الإجمالي؟"
+  if (
+    /how much (money|cash) (do i have|have i got)/i.test(lower) ||
+    /what is my (total )?(balance|money|funds)/i.test(lower) ||
+    /total (balance|money)/i.test(lower) ||
+    /available (funds|balance)/i.test(lower) ||
+    /معايا (كام|كم)/i.test(lower) ||
+    /كم (معي|معايا) من (المال|الفلوس)/i.test(lower) ||
+    /كم (رصيدي|فلوسي|أموالي)/i.test(lower) ||
+    /إجمالي (الرصيد|الفلوس|الأموال)/i.test(lower) ||
+    /الرصيد (الإجمالي|الكلي|المتاح)/i.test(lower)
+  ) {
+    return {
+      type: 'query_balance',
+      raw_text: rawInput,
+      confidence: 0.95,
+    };
+  }
+
   // 3. Query: Category expenses this week / month
   // "Show my food expenses this week" / "مصاريف الأكل هذا الأسبوع"
   const catQueryMatchEn = lower.match(/(?:show|what are|how much did i spend on) ([a-z\s]+) (?:expenses )?(this week|this month)/i);

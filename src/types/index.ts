@@ -154,6 +154,7 @@ export type NaturalLanguageCommandType =
   | 'query_week'
   | 'query_category'
   | 'query_budget'
+  | 'query_balance'
   | 'update_transaction'
   | 'delete_transaction'
   | 'unknown';

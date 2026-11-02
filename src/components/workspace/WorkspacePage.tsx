@@ -46,6 +46,9 @@ export const WorkspacePage: React.FC = () => {
     updateTransaction,
     deleteTransaction,
     dailySpendingAnalysis,
+    totalBalance,
+    allTimeIncome,
+    allTimeExpenses,
     setActivePage,
   } = useApp();
   const { t, isRTL } = useTranslation(language);
@@ -152,6 +155,18 @@ export const WorkspacePage: React.FC = () => {
           language === 'ar'
             ? `المتبقي في ميزانيتك: ${formatCurrency(remaining_budget, currency, language)}. المخصص اليومي المقترح للأيام الـ ${remaining_days} المتبقية هو ${formatCurrency(recommended_daily_pace, currency, language)}/يوم.`
             : `You have ${formatCurrency(remaining_budget, currency, language)} remaining in your monthly budget. Your recommended pace for the remaining ${remaining_days} days is ${formatCurrency(recommended_daily_pace, currency, language)}/day.`,
+      });
+      return;
+    }
+
+    // 3b. Handle Query: Total Balance / Total Money
+    if (result.type === 'query_balance') {
+      setQueryFeedback({
+        title: language === 'ar' ? 'إجمالي الرصيد المالي المتاح' : 'Total Available Balance',
+        description:
+          language === 'ar'
+            ? `إجمالي رصيدك المالي المتاح هو ${formatCurrency(totalBalance, currency, language)}. يشمل الرصيد الافتتاحي (${formatCurrency(user?.opening_balance || 0, currency, language)}) وإجمالي الدخل التراكمي (${formatCurrency(allTimeIncome, currency, language)}) مطروحاً منه إجمالي المصروفات (${formatCurrency(allTimeExpenses, currency, language)}).`
+            : `Your total available balance is ${formatCurrency(totalBalance, currency, language)}. This includes your opening funds (${formatCurrency(user?.opening_balance || 0, currency, language)}) plus all-time income (${formatCurrency(allTimeIncome, currency, language)}) minus all-time expenses (${formatCurrency(allTimeExpenses, currency, language)}).`,
       });
       return;
     }

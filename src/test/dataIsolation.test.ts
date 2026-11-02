@@ -167,5 +167,59 @@ describe('Multi-User Data Isolation & Financial Integrity Tests', () => {
 
     const diff = subtractMoney(100.55, 50.25);
     expect(diff).toBe(50.3);
+
+  });
+
+  it('preserves cumulative total balance across month transitions (October 300 income carries into November)', () => {
+    const openingBalance = 0;
+    const octIncomeTx: Transaction = {
+      id: 'tx-oct-income',
+      user_id: userA_Id,
+      type: 'income',
+      amount: 300,
+      currency: 'EGP',
+      category_id: 'cat-salary',
+      description: 'Freelance income Oct 29',
+      transaction_date: '2026-10-29',
+    };
+
+    const novExpenseTx: Transaction = {
+      id: 'tx-nov-expense',
+      user_id: userA_Id,
+      type: 'expense',
+      amount: 50,
+      currency: 'EGP',
+      category_id: 'cat-food',
+      description: 'Lunch Nov 02',
+      transaction_date: '2026-11-02',
+    };
+
+    const allTransactions = [octIncomeTx, novExpenseTx];
+
+    // Calculate November monthly figures
+    const novTransactions = allTransactions.filter((t) => t.transaction_date.startsWith('2026-11'));
+    const novMonthlyIncome = novTransactions
+      .filter((t) => t.type === 'income')
+      .reduce((sum, t) => addMoney(sum, t.amount), 0);
+    const novMonthlyExpenses = novTransactions
+      .filter((t) => t.type === 'expense')
+      .reduce((sum, t) => addMoney(sum, t.amount), 0);
+
+    // November monthly income is 0 because the 300 was earned in October
+    expect(novMonthlyIncome).toBe(0);
+    expect(novMonthlyExpenses).toBe(50);
+
+    // Calculate Total Money (All-Time cumulative balance)
+    let totalIncome = 0;
+    let totalExpenses = 0;
+    for (const t of allTransactions) {
+      if (t.type === 'income') totalIncome = addMoney(totalIncome, t.amount);
+      if (t.type === 'expense') totalExpenses = addMoney(totalExpenses, t.amount);
+    }
+    const totalMoney = subtractMoney(addMoney(openingBalance, totalIncome), totalExpenses);
+
+    // Total Money carries over: 300 (Oct) - 50 (Nov) = 250 EGP!
+    expect(totalMoney).toBe(250);
+
   });
 });

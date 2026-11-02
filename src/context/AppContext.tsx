@@ -15,10 +15,10 @@ import {
   DailySpendingAnalysis,
 } from '@/types';
 import { StorageService } from '@/lib/storage';
-import { getCurrentYearAndMonth, getTodayDateString } from '@/lib/dateUtils';
+import { getCurrentYearAndMonth, getTodayDateString, parseISO } from '@/lib/dateUtils';
 import { calculateDailySpending } from '@/lib/spendingCalculator';
 import { getSupabase } from '@/lib/supabase';
-import { addMoney } from '@/lib/currency';
+import { addMoney, subtractMoney } from '@/lib/currency';
 import { useToast } from '@/components/ui/Toast';
 
 export type AppPage =
@@ -63,6 +63,13 @@ interface AppContextType {
   // Derived Calculations
   currentMonthBudget: MonthlyBudget | null;
   dailySpendingAnalysis: DailySpendingAnalysis;
+  totalBalance: number;
+  allTimeIncome: number;
+  allTimeExpenses: number;
+  allTimeRefunds: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlyNetCashflow: number;
 
   // Actions
   addTransaction: (tx: Omit<Transaction, 'id' | 'user_id'> & { user_id?: string }) => Promise<Transaction>;
@@ -326,6 +333,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       todayDateStr: getTodayDateString(),
     });
   }, [transactions, currentMonthBudget, selectedYear, selectedMonth]);
+
+  // All-time cumulative total balance and income/expense totals
+  const { totalBalance, allTimeIncome, allTimeExpenses, allTimeRefunds } = useMemo(() => {
+    const opening = Number(user?.opening_balance) || 0;
+    let inc = 0;
+    let exp = 0;
+    let ref = 0;
+
+    for (const t of transactions) {
+      const amt = Number(t.amount) || 0;
+      if (t.type === 'income') {
+        inc = addMoney(inc, amt);
+      } else if (t.type === 'expense') {
+        exp = addMoney(exp, amt);
+      } else if (t.type === 'refund') {
+        ref = addMoney(ref, amt);
+      }
+    }
+
+    // Total Money = Opening Funds + All-Time Income + All-Time Refunds - All-Time Expenses
+    const balance = subtractMoney(addMoney(addMoney(opening, inc), ref), exp);
+    return {
+      totalBalance: balance,
+      allTimeIncome: inc,
+      allTimeExpenses: exp,
+      allTimeRefunds: ref,
+    };
+  }, [user?.opening_balance, transactions]);
+
+  const { monthlyIncome, monthlyExpenses, monthlyNetCashflow } = useMemo(() => {
+    let inc = 0;
+    let exp = 0;
+
+    for (const t of transactions) {
+      try {
+        const d = parseISO(t.transaction_date);
+        if (d.getFullYear() === selectedYear && d.getMonth() + 1 === selectedMonth) {
+          const amt = Number(t.amount) || 0;
+          if (t.type === 'income') {
+            inc = addMoney(inc, amt);
+          } else if (t.type === 'expense') {
+            exp = addMoney(exp, amt);
+          } else if (t.type === 'refund') {
+            exp = Math.max(0, subtractMoney(exp, amt));
+          }
+        }
+      } catch {}
+    }
+
+    return {
+      monthlyIncome: inc,
+      monthlyExpenses: exp,
+      monthlyNetCashflow: subtractMoney(inc, exp),
+    };
+  }, [transactions, selectedYear, selectedMonth]);
 
   // --- ACTIONS WITH USER ISOLATION & FEEDBACK ---
   const addTransaction = async (tx: Omit<Transaction, 'id' | 'user_id'> & { user_id?: string }) => {
@@ -668,6 +730,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setCurrency,
         currentMonthBudget,
         dailySpendingAnalysis,
+        totalBalance,
+        allTimeIncome,
+        allTimeExpenses,
+        allTimeRefunds,
+        monthlyIncome,
+        monthlyExpenses,
+        monthlyNetCashflow,
         addTransaction,
         updateTransaction,
         deleteTransaction,

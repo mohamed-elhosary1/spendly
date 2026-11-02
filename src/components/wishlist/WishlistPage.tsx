@@ -40,6 +40,7 @@ export const WishlistPage: React.FC = () => {
     convertWishlistToExpense,
     categories,
     dailySpendingAnalysis,
+    totalBalance,
     user,
     currency,
     language,
@@ -291,7 +292,7 @@ export const WishlistPage: React.FC = () => {
           filteredItems.map((item) => {
             const affordability = evaluateAffordability(item, {
               remainingBudget: dailySpendingAnalysis.remaining_budget,
-              availableBalance: user?.opening_balance || 0,
+              availableBalance: totalBalance,
               currency,
               language,
               remainingDays: dailySpendingAnalysis.remaining_days,
@@ -547,7 +548,7 @@ export const WishlistPage: React.FC = () => {
           {(() => {
             const aff = evaluateAffordability(selectedAffordabilityItem, {
               remainingBudget: dailySpendingAnalysis.remaining_budget,
-              availableBalance: user?.opening_balance || 0,
+              availableBalance: totalBalance,
               currency,
               language,
               remainingDays: dailySpendingAnalysis.remaining_days,
