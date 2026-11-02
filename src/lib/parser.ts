@@ -219,6 +219,42 @@ export function parseConversationalCommand(
     };
   }
 
+  // 2c. Query: Wishlist Prioritization & Purchase Order ("رتبلي اجيب ايه الاول" / "what should I buy first")
+  if (
+    /what should i buy first/i.test(lower) ||
+    /rank (my )?(wishlist|purchases|items)/i.test(lower) ||
+    /priorit(ize|y) (my )?(wishlist|purchases)/i.test(lower) ||
+    /which item should i buy/i.test(lower) ||
+    /order (my )?wishlist/i.test(lower) ||
+    /(رتب|ارتب|ترتيب)\s*(لي|ليا|المشتريات|قائمة الرغبات|الرغبات)?\s*(اجيب|اشتري|أشتري)\s*(ايه|إيه|شو|ماذا)?\s*(الاول|الأول)/i.test(lower) ||
+    /(اجيب|اشتري|أشتري)\s*(ايه|إيه)\s*(الاول|الأول)/i.test(lower) ||
+    /رتبلي (قائمة الرغبات|المشتريات|الرغبات)/i.test(lower) ||
+    /أولويات (الشراء|المشتريات)/i.test(lower)
+  ) {
+    return {
+      type: 'query_wishlist_priority',
+      raw_text: rawInput,
+      confidence: 0.95,
+    };
+  }
+
+  // 2d. Query: Financial Advice / Daily Pace Analysis
+  if (
+    /financial advice/i.test(lower) ||
+    /give me (some )?advice/i.test(lower) ||
+    /spending pace advice/i.test(lower) ||
+    /how is my (spending|pace|budget)/i.test(lower) ||
+    /(نصيحة|نصائح)\s*(مالية|الميزانية|اليوم)?/i.test(lower) ||
+    /حلل (وتيرة|معدل)?\s*(صرفي|إنفاقي|الإنفاق|المصروفات)/i.test(lower) ||
+    /قيم (وضعي|صرفي) المالي/i.test(lower)
+  ) {
+    return {
+      type: 'query_financial_advice',
+      raw_text: rawInput,
+      confidence: 0.95,
+    };
+  }
+
   // 3. Query: Category expenses this week / month
   // "Show my food expenses this week" / "مصاريف الأكل هذا الأسبوع"
   const catQueryMatchEn = lower.match(/(?:show|what are|how much did i spend on) ([a-z\s]+) (?:expenses )?(this week|this month)/i);

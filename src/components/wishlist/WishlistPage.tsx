@@ -12,7 +12,10 @@ import {
   DollarSign,
   Calendar,
   Filter,
+  Sparkles,
+  ArrowUpDown,
 } from 'lucide-react';
+import { prioritizeWishlistWithAI, WishlistPrioritizationResult } from '@/lib/geminiAdvisor';
 import { useApp } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -50,6 +53,29 @@ export const WishlistPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [aiPrioritization, setAiPrioritization] = useState<WishlistPrioritizationResult | null>(null);
+  const [isPrioritizing, setIsPrioritizing] = useState<boolean>(false);
+  const [sortByAiRank, setSortByAiRank] = useState<boolean>(false);
+
+  const handleRunAiPrioritization = async () => {
+    setIsPrioritizing(true);
+    try {
+      const res = await prioritizeWishlistWithAI(
+        wishlistItems,
+        dailySpendingAnalysis,
+        totalBalance,
+        currency,
+        language
+      );
+      setAiPrioritization(res);
+      setSortByAiRank(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPrioritizing(false);
+    }
+  };
+
 
   // Add/Edit modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -232,6 +258,68 @@ export const WishlistPage: React.FC = () => {
           </p>
         </Card>
       </div>
+
+      {/* AI Prioritization Action Card */}
+      <Card className="p-4 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-bold">
+                <Sparkles className="h-3.5 w-3.5" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground">
+                {language === 'ar' ? 'ترتيب أولويات الشراء بالذكاء الاصطناعي (Gemini AI Smart Ranking)' : 'Gemini AI Smart Purchase Ranking'}
+              </h3>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {language === 'ar'
+                ? 'يرتب لك مشترياتك بالأرقام حسب وتيرة الصرف اليومي والميزانية المتبقية، لتعرف أي غرض تشتريه أولاً دون ضغط مالي.'
+                : 'Ranks your planned purchases against your daily spending velocity and remaining budget so you know what to buy first.'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {aiPrioritization && (
+              <Button
+                variant={sortByAiRank ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => setSortByAiRank(!sortByAiRank)}
+                className="text-xs font-semibold gap-1.5"
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span>{sortByAiRank ? (language === 'ar' ? 'الترتيب بالذكاء الاصطناعي مفعّل' : 'Sorted by AI') : (language === 'ar' ? 'ترتيب حسب AI' : 'Sort by AI')}</span>
+              </Button>
+            )}
+
+            <Button
+              size="sm"
+              isLoading={isPrioritizing}
+              disabled={isPrioritizing || wishlistItems.length === 0}
+              onClick={handleRunAiPrioritization}
+              className="text-xs font-bold gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{aiPrioritization ? (language === 'ar' ? 'إعادة التحليل والترتيب' : 'Re-Rank Priorities') : (language === 'ar' ? '✨ رتب لي المشتريات الآن' : '✨ Rank My Purchases')}</span>
+            </Button>
+          </div>
+        </div>
+
+        {aiPrioritization && (
+          <div className="p-3 rounded-xl bg-background/80 border border-emerald-500/30 text-xs space-y-1 text-foreground animate-in fade-in">
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground pb-1 border-b border-border/40">
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                {language === 'ar' ? '💡 التوجيه الاستراتيجي للمشتريات' : '💡 AI Purchasing Strategy'}
+              </span>
+              <Badge variant="outline" className="text-[10px]">
+                {aiPrioritization.source === 'gemini' ? 'Gemini 2.5 Flash' : 'Built-in Engine'}
+              </Badge>
+            </div>
+            <p className="leading-relaxed">
+              {language === 'ar' ? aiPrioritization.overall_strategy_ar : aiPrioritization.overall_strategy}
+            </p>
+          </div>
+        )}
+      </Card>
 
       {/* Filters Bar */}
       <Card className="p-3.5 flex flex-wrap items-center justify-between gap-3">

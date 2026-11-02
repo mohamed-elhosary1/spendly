@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Calendar,
   Layers,
+  ArrowRight,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
@@ -34,6 +35,12 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
+import {
+  prioritizeWishlistWithAI,
+  generateFinancialAdviceMessage,
+  WishlistPrioritizationResult,
+  FinancialAdviceMessage,
+} from '@/lib/geminiAdvisor';
 
 export const WorkspacePage: React.FC = () => {
   const {
@@ -50,6 +57,7 @@ export const WorkspacePage: React.FC = () => {
     totalBalance,
     allTimeIncome,
     allTimeExpenses,
+    wishlistItems,
     setActivePage,
   } = useApp();
   const { t, isRTL } = useTranslation(language);

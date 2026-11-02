@@ -155,6 +155,8 @@ export type NaturalLanguageCommandType =
   | 'query_category'
   | 'query_budget'
   | 'query_balance'
+  | 'query_wishlist_priority'
+  | 'query_financial_advice'
   | 'update_transaction'
   | 'delete_transaction'
   | 'unknown';
@@ -209,6 +211,8 @@ export interface AffordabilityResult {
   is_affordable_with_savings: boolean;
   budget_impact_percentage: number;
   remaining_after_purchase: number;
+  new_daily_pace?: number;
+  daily_pace_drop?: number;
   verdict: 'comfortable' | 'tight' | 'exceeds_budget' | 'requires_savings';
   explanation: string;
   explanation_ar: string;

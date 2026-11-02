@@ -12,6 +12,7 @@
     "reset-db": "node scripts/reset-db.mjs"
   },
   "dependencies": {
+    "@google/genai": "^2.32.0",
     "@supabase/supabase-js": "^2.118.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",

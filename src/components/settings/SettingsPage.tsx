@@ -14,7 +14,11 @@ import {
   RefreshCw,
   LogOut,
   User as UserIcon,
+  Sparkles,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import { getGeminiApiKey, setGeminiApiKey, isGeminiConfigured } from '@/lib/geminiAdvisor';
 import { useApp } from '@/context/AppContext';
 import { useTranslation } from '@/lib/i18n';
 import {
@@ -58,6 +62,9 @@ export const SettingsPage: React.FC = () => {
   );
   const [budgetCycleDay, setBudgetCycleDay] = useState<number>(user?.budget_cycle_start_day || 1);
   const [isSavedFeedback, setIsSavedFeedback] = useState<boolean>(false);
+  const [geminiApiKey, setGeminiApiKeyState] = useState<string>(getGeminiApiKey());
+  const [showGeminiKey, setShowGeminiKey] = useState<boolean>(false);
+  const [isGeminiSaved, setIsGeminiSaved] = useState<boolean>(false);
 
   // Recurring subscription modal
   const [isRecurringModalOpen, setIsRecurringModalOpen] = useState(false);

@@ -92,4 +92,38 @@ describe('Wishlist Affordability Analysis', () => {
     expect(res.is_affordable_with_savings).toBe(true);
     expect(res.verdict).toBe('comfortable');
   });
+
+  it('does NOT verdict comfortable without a monthly budget even if total funds are huge', () => {
+    const res = evaluateAffordability(baseItem, {
+      monthlyBudget: 0,
+      remainingBudget: 0,
+      availableBalance: 50000,
+      currency: 'EGP',
+      language: 'ar',
+      remainingDays: 20,
+    });
+
+    expect(res.verdict).not.toBe('comfortable');
+    expect(res.is_affordable_in_budget).toBe(false);
+  });
+
+  it('verdicts tight when purchase crushes daily pace below user average spending pace', () => {
+    // 2000 remaining budget, item is 1000, leaves 1000 (> 25% of 2000).
+    // But with 25 days left, new daily pace is 1000 / 25 = 40/day.
+    // If user's average spending is 75/day, 40/day is below their spending pace!
+    const res = evaluateAffordability(baseItem, {
+      monthlyBudget: 3000,
+      remainingBudget: 2000,
+      availableBalance: 10000,
+      currency: 'EGP',
+      language: 'en',
+      remainingDays: 25,
+      averageDailySpending: 75,
+      recommendedDailyPace: 80,
+    });
+
+    expect(res.is_affordable_in_budget).toBe(true);
+    expect(res.verdict).toBe('tight');
+    expect(res.new_daily_pace).toBe(40);
+  });
 });
