@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   UserProfile,
   Category,
@@ -138,6 +138,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [recurringTransactions, setRecurringTransactions] = useState<RecurringTransaction[]>([]);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
+  const currentUserIdRef = useRef<string | null>(null);
 
   // Set initial preferences
   const language = user?.language || 'en';
@@ -174,6 +175,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } = await supabase.auth.getUser();
 
       if (authErr || !authUser) {
+        currentUserIdRef.current = null;
         setIsAuthenticated(false);
         setUser(null);
         setTransactions([]);
@@ -188,6 +190,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       setIsAuthenticated(true);
+      currentUserIdRef.current = authUser.id;
       const profile = await StorageService.getUserProfile();
       setUser(profile);
       if (profile && !profile.is_onboarded) {
@@ -237,6 +240,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const supabase = getSupabase();
       await supabase.auth.signOut();
+      currentUserIdRef.current = null;
       setIsAuthenticated(false);
       setUser(null);
       setTransactions([]);
@@ -263,11 +267,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
           return;
         }
-        if (event === 'SIGNED_IN' && user?.id === session.user.id) {
+        if (currentUserIdRef.current === session.user.id) {
           return;
         }
+        currentUserIdRef.current = session.user.id;
         loadData(false);
       } else {
+        currentUserIdRef.current = null;
         setIsAuthenticated(false);
         setUser(null);
       }
